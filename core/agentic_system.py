@@ -16,8 +16,8 @@ from core.tools import calculate_maintenance_calories
 
 llm = ChatOpenAI(
     api_key=os.getenv("OPENAI_API_KEY"),
-    model="gpt-5",
-    temperature=0.7,
+    model="gpt-5-nano-2025-08-07",
+    temperature=0,
 )
 
 def should_continue(state: MessagesState) -> Literal["tools", "__end__"]:
@@ -69,21 +69,12 @@ def create_agent(
     return workflow.compile()
 
 
-def create_fitness_graph():
+nutritionist_agent = create_agent(
+    model=llm,
+    tools=[calculate_maintenance_calories],
+    system_prompt=NUTRITIONIST_PROMPT,
+)
 
-    nutritionist_agent = create_agent(
-        model=llm,
-        tools=[calculate_maintenance_calories],
-        system_prompt=NUTRITIONIST_PROMPT,
-    )
-
-    workflow = StateGraph(MessagesState)
-    workflow.add_node("nutritionist", nutritionist_agent)
-
-    workflow.add_edge(START, "nutritionist")
-    workflow.add_edge("nutritionist", END)
-
-    return workflow.compile()
 
 
 def extract_tool_logs(messages: List[BaseMessage]) -> List[str]:
@@ -103,12 +94,12 @@ def extract_tool_logs(messages: List[BaseMessage]) -> List[str]:
     return logs
 
 
-def run_fitness_agent(graph, user_message: str):
+def run_fitness_agent(user_message: str):
     initial_state = {
         "messages": [HumanMessage(content=user_message)]
     }
 
-    result = graph.invoke(initial_state)
+    result = nutritionist_agent.invoke(initial_state)
     messages = result["messages"]
 
     final_answer = ""

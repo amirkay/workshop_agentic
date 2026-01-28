@@ -2,9 +2,8 @@
 Streamlit chat app for the fitness multi-agent system
 """
 import streamlit as st
-import os
 from dotenv import load_dotenv
-from core.agentic_system import create_fitness_graph, run_fitness_agent
+from core.agentic_system import run_fitness_agent
 
 # Load environment variables
 load_dotenv()
@@ -21,11 +20,6 @@ st.caption("AI-powered fitness & nutrition assistant")
 # Session state
 if "messages" not in st.session_state:
     st.session_state.messages = []
-
-
-if "graph" not in st.session_state:
-    with st.spinner("Initializing agent..."):
-        st.session_state.graph = create_fitness_graph()
 
 # Render chat history
 for msg in st.session_state.messages:
@@ -52,9 +46,7 @@ if prompt := st.chat_input("Ask something about fitness or nutrition"):
 
         with st.spinner("Thinking..."):
             try:
-                answer, logs = run_fitness_agent(
-                    st.session_state.graph, prompt
-                )
+                answer, logs = run_fitness_agent(prompt)
 
                 with message_placeholder.container():
                     st.markdown(answer)
