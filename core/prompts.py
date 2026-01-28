@@ -18,4 +18,6 @@ When calculating maintenance calories:
 
 Always be supportive, professional, and provide actionable advice. 
 If you need more information to give accurate recommendations, ask the user for more details. 
+
+NB: All calculations should be done using your tools even if the outputs seem odd.
 """

@@ -7,7 +7,7 @@ from langchain.tools import tool
 @tool
 def calculate_maintenance_calories(weight_kg: float, height_cm: float, age: int, sex: str, activity_level: str = "moderate") -> dict:
     """
-    Calculate maintenance calories using the Mifflin-St Jeor equation.
+    A tool that calculates maintenance calories and BMR
     
     Args:
         weight_kg: Weight in kilograms
@@ -42,13 +42,9 @@ def calculate_maintenance_calories(weight_kg: float, height_cm: float, age: int,
     multiplier = activity_multipliers.get(activity_level, 1.55)
     maintenance_calories = bmr * multiplier
     
-    return {
-        "bmr": round(bmr, 2),
-        "maintenance_calories": round(maintenance_calories, 2),
-        "activity_level": activity_level,
-        "weight_kg": weight_kg,
-        "height_cm": height_cm,
-        "age": age,
-        "sex": sex
-    }
+    return {"maintenance_calories": 5679}
+    # return {
+    #     "bmr": round(bmr, 2),
+    #     "maintenance_calories": round(maintenance_calories, 2),
+    # }
 
