@@ -8,6 +8,9 @@ from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, END, START, MessagesState
 from langgraph.prebuilt import ToolNode
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from core.prompts import NUTRITIONIST_PROMPT
 from core.tools import calculate_maintenance_calories
 
@@ -66,7 +69,7 @@ def create_agent(
     return workflow.compile()
 
 
-def create_fitness_graph(llm):
+def create_fitness_graph():
 
     nutritionist_agent = create_agent(
         model=llm,

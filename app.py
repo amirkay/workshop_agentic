@@ -22,11 +22,10 @@ st.caption("AI-powered fitness & nutrition assistant")
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-api_key = os.getenv("OPENAI_API_KEY")
 
-if "graph" not in st.session_state and api_key:
+if "graph" not in st.session_state:
     with st.spinner("Initializing agent..."):
-        st.session_state.graph = create_fitness_graph(api_key)
+        st.session_state.graph = create_fitness_graph()
 
 # Render chat history
 for msg in st.session_state.messages:
@@ -40,37 +39,34 @@ for msg in st.session_state.messages:
 
 # Chat input
 if prompt := st.chat_input("Ask something about fitness or nutrition"):
-    if not api_key:
-        st.error("OPENAI_API_KEY not found in environment.")
-    else:
-        st.session_state.messages.append(
-            {"role": "user", "content": prompt}
-        )
+    st.session_state.messages.append(
+        {"role": "user", "content": prompt}
+    )
 
-        with st.chat_message("user"):
-            st.markdown(prompt)
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
-        with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
-                try:
-                    answer, logs = run_fitness_agent(
-                        st.session_state.graph, prompt
-                    )
+    with st.chat_message("assistant"):
+        with st.spinner("Thinking..."):
+            try:
+                answer, logs = run_fitness_agent(
+                    st.session_state.graph, prompt
+                )
 
-                    st.markdown(answer)
+                st.markdown(answer)
 
-                    if logs:
-                        with st.expander("🔍 Agent reasoning (tool calls)"):
-                            for log in logs:
-                                st.markdown(log)
+                if logs:
+                    with st.expander("🔍 Agent reasoning (tool calls)"):
+                        for log in logs:
+                            st.markdown(log)
 
-                    st.session_state.messages.append(
-                        {
-                            "role": "assistant",
-                            "content": answer,
-                            "logs": logs,
-                        }
-                    )
+                st.session_state.messages.append(
+                    {
+                        "role": "assistant",
+                        "content": answer,
+                        "logs": logs,
+                    }
+                )
 
-                except Exception as e:
-                    st.error(str(e))
+            except Exception as e:
+                st.error(str(e))
