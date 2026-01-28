@@ -1,0 +1,9 @@
+services:
+  fitness-agent:
+    image: amirkay98/agent-workshop:v0
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
