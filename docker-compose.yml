@@ -1,6 +1,6 @@
 services:
   fitness-agent:
-    image: amirkay98/agent-workshop:v0
+    image: amirkay98/agentic-workshop:v0
     ports:
       - "8501:8501"
     env_file:
