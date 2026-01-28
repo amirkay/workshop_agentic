@@ -47,18 +47,23 @@ if prompt := st.chat_input("Ask something about fitness or nutrition"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
+        message_placeholder = st.empty()
+        logs_placeholder = st.empty()
+
         with st.spinner("Thinking..."):
             try:
                 answer, logs = run_fitness_agent(
                     st.session_state.graph, prompt
                 )
 
-                st.markdown(answer)
+                with message_placeholder.container():
+                    st.markdown(answer)
 
                 if logs:
-                    with st.expander("🔍 Agent reasoning (tool calls)"):
-                        for log in logs:
-                            st.markdown(log)
+                    with logs_placeholder.container():
+                        with st.expander("🔍 Agent reasoning (tool calls)"):
+                            for log in logs:
+                                st.markdown(log)
 
                 st.session_state.messages.append(
                     {
