@@ -11,8 +11,8 @@ from langgraph.prebuilt import ToolNode
 from dotenv import load_dotenv
 load_dotenv()
 
-from core.prompts import NUTRITIONIST_PROMPT
-from core.tools import calculate_maintenance_calories
+from core.prompts import NUTRITIONIST_PROMPT, TRAINER_PROMPT
+from core.tools import calculate_maintenance_calories, create_workout_plan
 
 llm = ChatOpenAI(
     api_key=os.getenv("OPENAI_API_KEY"),
@@ -75,6 +75,12 @@ nutritionist_agent = create_agent(
     system_prompt=NUTRITIONIST_PROMPT,
 )
 
+trainer_agent = create_agent(
+    model=llm,
+    tools=[create_workout_plan],
+    system_prompt=TRAINER_PROMPT,
+)
+
 
 
 def extract_tool_logs(messages: List[BaseMessage]) -> List[str]:
@@ -94,12 +100,26 @@ def extract_tool_logs(messages: List[BaseMessage]) -> List[str]:
     return logs
 
 
-def run_fitness_agent(user_message: str):
+# Expose agents map and helper to run a named agent
+AGENTS = {
+    "Nutritionist": nutritionist_agent,
+    "Trainer": trainer_agent,
+}
+
+AGENT_NAMES = list(AGENTS.keys())
+
+
+def run_agent(agent_name: str, user_message: str):
+    """Invoke the named agent and return (answer, logs)."""
+    agent = AGENTS.get(agent_name)
+    if agent is None:
+        raise ValueError(f"Unknown agent: {agent_name}")
+
     initial_state = {
         "messages": [HumanMessage(content=user_message)]
     }
 
-    result = nutritionist_agent.invoke(initial_state)
+    result = agent.invoke(initial_state)
     messages = result["messages"]
 
     final_answer = ""
@@ -111,3 +131,8 @@ def run_fitness_agent(user_message: str):
     logs = extract_tool_logs(messages)
 
     return final_answer, logs
+
+
+# # Backwards compatibility helper
+# def run_fitness_agent(user_message: str):
+#     return run_agent("Nutritionist", user_message)
