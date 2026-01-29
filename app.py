@@ -46,11 +46,15 @@ if prompt := st.chat_input("Ask about nutrition, workouts, or fitness..."):
 
         with st.spinner("Thinking..."):
             try:
-                answer, logs = run_agent("Mastermind", prompt)
+                answer, logs = run_agent(prompt)
 
-                with message_placeholder.container():
-                    st.markdown(answer)
+                print(answer)
+                print(logs)
 
+                # Display answer
+                message_placeholder.markdown(answer)
+
+                # Display logs if available
                 if logs:
                     with logs_placeholder.container():
                         with st.expander("🔍 Agent reasoning (tool calls)"):

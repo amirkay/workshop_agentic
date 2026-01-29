@@ -9,6 +9,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, END, START, MessagesState
 from langgraph.prebuilt import ToolNode
 from langgraph.types import Command
+from langchain.tools import tool
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -84,96 +85,43 @@ trainer_agent = create_agent(
 )
 
 
-# ============= STATE DEFINITION =============
-class State(MessagesState):
-    next: str
+# Tool wrappers that call the worker agents so they can be passed as tools
+@tool
+def nutritionist_tool(prompt: str) -> str:
+    """Call the nutritionist agent with a prompt and return its final text."""
+    initial_state = {"messages": [HumanMessage(content=prompt)]}
+    result = nutritionist_agent.invoke(initial_state)
 
-
-# ============= SUPERVISOR NODE =============
-def make_supervisor_node():
-    """Create a supervisor node that routes to nutritionist, trainer, or end."""
-
-    class Router(TypedDict):
-        """Worker to route to next."""
-        next: Literal["FINISH", "nutritionist", "trainer"]
-
-    def supervisor_node(state: State) -> Command:
-        """Route to the appropriate agent."""
-        messages = [
-            {"role": "system", "content": MASTERMIND_PROMPT},
-        ] + state["messages"]
-        
-        response = llm.with_structured_output(Router).invoke(messages)
-        goto = response["next"]
-        
-        if goto == "FINISH":
-            goto = END
-        
-        return Command(goto=goto, update={"next": goto})
-
-    return supervisor_node
-
-
-# ============= WORKER NODES =============
-def nutritionist_node(state: State) -> Command:
-    """Call the nutritionist agent and return its response."""
-    result = nutritionist_agent.invoke(state)
-    
-    # Extract the final response
     final_response = ""
-    for msg in reversed(result["messages"]):
+    for msg in reversed(result.get("messages", [])):
         if isinstance(msg, AIMessage) and not msg.tool_calls:
             final_response = msg.content
             break
-    
-    return Command(
-        update={
-            "messages": [
-                HumanMessage(content=f"**Nutritionist:** {final_response}", name="nutritionist")
-            ]
-        },
-        goto="supervisor",
-    )
+
+    return final_response
 
 
-def trainer_node(state: State) -> Command:
-    """Call the trainer agent and return its response."""
-    result = trainer_agent.invoke(state)
-    
-    # Extract the final response
+@tool
+def trainer_tool(prompt: str) -> str:
+    """Call the trainer agent with a prompt and return its final text."""
+    initial_state = {"messages": [HumanMessage(content=prompt)]}
+    result = trainer_agent.invoke(initial_state)
+
     final_response = ""
-    for msg in reversed(result["messages"]):
+    for msg in reversed(result.get("messages", [])):
         if isinstance(msg, AIMessage) and not msg.tool_calls:
             final_response = msg.content
             break
-    
-    return Command(
-        update={
-            "messages": [
-                HumanMessage(content=f"**Trainer:** {final_response}", name="trainer")
-            ]
-        },
-        goto="supervisor",
+
+    return final_response
+
+
+
+mastermind_agent = create_agent(
+        model=llm,
+        tools=[nutritionist_tool, trainer_tool],
+        system_prompt=MASTERMIND_PROMPT,
     )
-
-
-# ============= BUILD THE WORKFLOW =============
-def create_mastermind_workflow():
-    """Create the mastermind orchestrator workflow."""
-    builder = StateGraph(State)
-    
-    # Add nodes
-    builder.add_node("supervisor", make_supervisor_node())
-    builder.add_node("nutritionist", nutritionist_node)
-    builder.add_node("trainer", trainer_node)
-    
-    # Add edges
-    builder.add_edge(START, "supervisor")
-    
-    return builder.compile()
-
-
-mastermind_graph = create_mastermind_workflow()
 
 
 def extract_tool_logs(messages: List[BaseMessage]) -> List[str]:
@@ -193,31 +141,31 @@ def extract_tool_logs(messages: List[BaseMessage]) -> List[str]:
     return logs
 
 
-def run_agent(agent_name: str, user_message: str):
-    """Invoke the mastermind workflow and return (answer, logs)."""
-    if agent_name != "Mastermind":
-        raise ValueError(f"Only 'Mastermind' agent is supported. Got: {agent_name}")
+def run_agent(user_message: str):
+    """Stream the mastermind workflow and return (answer, logs)."""
 
-    initial_state = {
-        "messages": [HumanMessage(content=user_message)]
-    }
+    initial_state = {"messages": [HumanMessage(content=user_message)]}
 
-    result = mastermind_graph.invoke(initial_state, {"recursion_limit": 100})
-    messages = result["messages"]
+    all_messages = []
+
+    for output in mastermind_agent.stream(initial_state, {"recursion_limit": 100}):
+        for node_output in output.values():
+            if isinstance(node_output, dict) and "messages" in node_output:
+                all_messages.extend(node_output["messages"])
 
     final_answer = ""
-    for msg in reversed(messages):
-        if isinstance(msg, AIMessage) and not msg.tool_calls:
+    for msg in reversed(all_messages):
+        if isinstance(msg, (AIMessage, HumanMessage)):
+            if isinstance(msg, AIMessage) and msg.tool_calls:
+                continue
             final_answer = msg.content
             break
 
-    logs = extract_tool_logs(messages)
+    logs = extract_tool_logs(all_messages)
 
     return final_answer, logs
 
 
-# Backwards compatibility helper
-def run_fitness_agent(user_message: str):
-    return run_agent("Mastermind", user_message)
+ 
 
 
