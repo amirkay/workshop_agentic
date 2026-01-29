@@ -48,9 +48,6 @@ if prompt := st.chat_input("Ask about nutrition, workouts, or fitness..."):
             try:
                 answer, logs = run_agent(prompt)
 
-                print(answer)
-                print(logs)
-
                 # Display answer
                 message_placeholder.markdown(answer)
 

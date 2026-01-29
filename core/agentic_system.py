@@ -87,9 +87,9 @@ trainer_agent = create_agent(
 
 # Tool wrappers that call the worker agents so they can be passed as tools
 @tool
-def nutritionist_tool(prompt: str) -> str:
-    """Call the nutritionist agent with a prompt and return its final text."""
-    initial_state = {"messages": [HumanMessage(content=prompt)]}
+def nutritionist_tool(query: str) -> str:
+    """Call the nutritionist agent with a simple query and return its final text."""
+    initial_state = {"messages": [HumanMessage(content=query)]}
     result = nutritionist_agent.invoke(initial_state)
 
     final_response = ""
@@ -102,9 +102,9 @@ def nutritionist_tool(prompt: str) -> str:
 
 
 @tool
-def trainer_tool(prompt: str) -> str:
-    """Call the trainer agent with a prompt and return its final text."""
-    initial_state = {"messages": [HumanMessage(content=prompt)]}
+def trainer_tool(query: str) -> str:
+    """Call the trainer agent with a simple query and return its final text."""
+    initial_state = {"messages": [HumanMessage(content=query)]}
     result = trainer_agent.invoke(initial_state)
 
     final_response = ""
@@ -141,31 +141,24 @@ def extract_tool_logs(messages: List[BaseMessage]) -> List[str]:
     return logs
 
 
+
+
 def run_agent(user_message: str):
-    """Stream the mastermind workflow and return (answer, logs)."""
+    initial_state = {
+        "messages": [HumanMessage(content=user_message)]
+    }
 
-    initial_state = {"messages": [HumanMessage(content=user_message)]}
-
-    all_messages = []
-
-    for output in mastermind_agent.stream(initial_state, {"recursion_limit": 100}):
-        for node_output in output.values():
-            if isinstance(node_output, dict) and "messages" in node_output:
-                all_messages.extend(node_output["messages"])
+    result = mastermind_agent.invoke(initial_state, {"recursion_limit": 5})
+    messages = result["messages"]
 
     final_answer = ""
-    for msg in reversed(all_messages):
-        if isinstance(msg, (AIMessage, HumanMessage)):
-            if isinstance(msg, AIMessage) and msg.tool_calls:
-                continue
+    for msg in reversed(messages):
+        if isinstance(msg, AIMessage) and not msg.tool_calls:
             final_answer = msg.content
             break
 
-    logs = extract_tool_logs(all_messages)
+    logs = extract_tool_logs(messages)
 
     return final_answer, logs
-
-
- 
 
 
