@@ -174,6 +174,10 @@ The orchestrator:
 3. Routes to the appropriate specialist (nutrition or training)
 4. Returns the final response
 
+**HINTS**
+- Transforming an agent into a tool can be a simple invoke on the agent itself. (Which you already know how to do)
+- An orchestrator could be an agent, with sub-agents as tools and a simple orchestrating prompt.
+
 **Learning focus**: Agent composition, delegation patterns, system design
 
 ---
