@@ -30,15 +30,31 @@ A **fitness coaching system** with AI agents that:
 # Clone the repository
 git clone <REPO_URL>
 cd agentic-workshop
+```
 
-# Create environment file
-echo "OPENAI_API_KEY=sk-..." > .env
+Next create .env file in your project folder and create a variable OPENAI_API_KEY=sk-..
+
+To get the api key value please go to this website: 
+[text](https://eu.onetimesecret.com/secret/2hduz5j1mujtr28al17si9tjqb93w8d)
+
+The passphrase will be provided during the workshop.
+Next 
+
 
 # Start the application
+
+
+If you are on an ISIMA computer, you need to type this command in your terminal for docker to start 
+
+```bash
+docker-rootless-init.sh
+```
+Then simply run the docker compose file :
+```bash
 docker compose up
 ```
 
-Open your browser at **http://localhost:8501**
+Open your browser at **http://localhost:8501** to access the app.
 
 ### Option B: Local Python Environment
 
