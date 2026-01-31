@@ -35,7 +35,7 @@ cd agentic-workshop
 Next create .env file in your project folder and create a variable OPENAI_API_KEY=sk-..
 
 To get the api key value please go to this website: 
-[HERE](https://eu.onetimesecret.com/secret/2hduz5j1mujtr28al17si9tjqb93w8d)
+[HERE](https://pwpush.com/p/ndds_wvzxgga-g/r)
 
 The passphrase will be provided during the workshop.
 
